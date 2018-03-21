@@ -339,22 +339,25 @@ def result_logger(connections):
     else:
         print('No complete TCP connections.')
 
+def receive_packets(header, data):
+    decoder = ImpactDecoder.EthDecoder()
+    ethernet_packet = decoder.decode(data)
+
+    if ethernet_packet.get_ether_type() != ImpactPacket.IP.ethertype:
+        return
+
+    print(ethernet_packet)
+    ip_header = ethernet_packet.child()
+
 def main():
     filename = sys.argv[1]
     try:
         pc = pcapy.open_offline(filename)
-        pc.setfilter('tcp')
     except Exception as e:
         print('Cannot open capture file: %s' % filename)
         return -1
 
-    connections = {}
-    initial_packet_ts = 0.0
-
-    packet_parser(pc, connections, initial_packet_ts)
-    result_logger(connections)
-
-    return 0
+    pc.dispatch(-1, receive_packets)
 
 if __name__ == '__main__':
     main()

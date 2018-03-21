@@ -349,6 +349,9 @@ def receive_packets(header, data):
     print(ethernet_packet)
     ip_header = ethernet_packet.child()
 
+    # TODO: map protocol values to strings (1: 'ICMP') and add to set
+    print(ip_header.get_ip_p())
+
 def main():
     filename = sys.argv[1]
     try:

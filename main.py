@@ -347,6 +347,8 @@ PROTOCOL_TYPE = {
 }
 protocols = set([])
 source = ''
+destination = ''
+intermediate_list = []
 
 
 def print_results(addresses, protocols, round_trip_times):
@@ -354,6 +356,7 @@ def print_results(addresses, protocols, round_trip_times):
     print('The IP address of ultimate destination node:')
     print('The IP addresses of the intermediate destination nodes:')
 
+    # TODO: Sort by increasing order of protocol value
     print('The values in the protocol field of IP headers:')
 
     print('The number of fragments created from the original datagram is:')
@@ -372,7 +375,7 @@ def receive_packets(header, data):
     print(ethernet_packet)
 
     ip_header = ethernet_packet.child()
-    protocols.add(PROTOCOL_TYPE[ip_header.get_ip_p()])
+    protocols.add(ip_header.get_ip_p())
     if not source and PROTOCOL_TYPE[ip_header.get_ip_p()] == 'UDP':
         global source
         source = ip_header.get_ip_src()

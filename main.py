@@ -345,8 +345,9 @@ PROTOCOL_TYPE = {
     6: 'TCP',
     17: 'UDP'
 }
-
 protocols = set([])
+source = ''
+
 
 def print_results(addresses, protocols, round_trip_times):
     print('The IP address of the source node:')
@@ -372,6 +373,9 @@ def receive_packets(header, data):
 
     ip_header = ethernet_packet.child()
     protocols.add(PROTOCOL_TYPE[ip_header.get_ip_p()])
+    if not source and PROTOCOL_TYPE[ip_header.get_ip_p()] == 'UDP':
+        global source
+        source = ip_header.get_ip_src()
 
 def main():
     filename = sys.argv[1]
@@ -383,6 +387,7 @@ def main():
 
     pc.dispatch(-1, receive_packets)
     print(protocols)
+    print(source)
 
 if __name__ == '__main__':
     main()

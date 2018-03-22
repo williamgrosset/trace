@@ -2,30 +2,28 @@ from impacket import ImpactDecoder, ImpactPacket
 import sys
 import pcapy
 
+ult_source = ''
+ult_destination = ''
+intermediate_set = set([])
+protocol_set = set([])
 PROTOCOL_TYPE = {
     1: 'ICMP',
     2: 'IGMP',
     6: 'TCP',
     17: 'UDP'
 }
-protocols = set([])
-ult_source = ''
-ult_destination = ''
-intermediate_list = []
 
-def print_results(addresses, protocols, round_trip_times):
+def print_results():
     print('The IP address of the source node:')
     print('The IP address of ultimate destination node:')
     print('The IP addresses of the intermediate destination nodes:')
-
-    # TODO: Sort by increasing order of protocol value
     print('The values in the protocol field of IP headers:')
-
     print('The number of fragments created from the original datagram is:')
-
     print('The offset of the last fragment is:')
-
     print('The avg RTT between IP HERE and IP HERE is: VALUE ms, the s.d. is: VALUE ms')
+
+def calculate_round_trip_time():
+    print()
 
 def receive_packets(header, data):
     decoder = ImpactDecoder.EthDecoder()
@@ -40,10 +38,19 @@ def receive_packets(header, data):
     source = ip_header.get_ip_src()
     protocol = ip_header.get_ip_p()
 
-    protocols.add(protocol)
+    # Identify source
     if not ult_source and PROTOCOL_TYPE[protocol] == 'UDP':
         global ult_source
         ult_source = source
+
+    # TODO: Identify destination
+
+    # TODO: Identify intermediate(s)
+
+    # Add protocol type to set
+    protocol_set.add(protocol)
+
+    # TODO: Identify datagram fragments and last fragment offset
 
 def main():
     filename = sys.argv[1]
@@ -54,7 +61,11 @@ def main():
         sys.exit(1)
 
     pc.dispatch(-1, receive_packets)
-    print(protocols)
+    #calculate_round_trip_time()
+    #print_results()
+
+    # Testing
+    print(protocol_set)
     print(ult_source)
 
 if __name__ == '__main__':

@@ -346,6 +346,8 @@ PROTOCOL_TYPE = {
     17: 'UDP'
 }
 
+protocol_types = set([])
+
 def receive_packets(header, data):
     decoder = ImpactDecoder.EthDecoder()
     ethernet_packet = decoder.decode(data)
@@ -356,8 +358,7 @@ def receive_packets(header, data):
     print(ethernet_packet)
     ip_header = ethernet_packet.child()
 
-    # TODO: map protocol values to strings (1: 'ICMP') and add to set
-    print(PROTOCOL_TYPE[ip_header.get_ip_p()])
+    protocol_types.add(PROTOCOL_TYPE[ip_header.get_ip_p()])
 
 def main():
     filename = sys.argv[1]
@@ -368,6 +369,7 @@ def main():
         return -1
 
     pc.dispatch(-1, receive_packets)
+    print(protocol_types)
 
 if __name__ == '__main__':
     main()

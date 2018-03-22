@@ -346,7 +346,7 @@ PROTOCOL_TYPE = {
     17: 'UDP'
 }
 
-protocol_types = set([])
+protocols = set([])
 
 def print_results(addresses, protocols, round_trip_times):
     print('The IP address of the source node:')
@@ -369,9 +369,9 @@ def receive_packets(header, data):
         return
 
     print(ethernet_packet)
-    ip_header = ethernet_packet.child()
 
-    protocol_types.add(PROTOCOL_TYPE[ip_header.get_ip_p()])
+    ip_header = ethernet_packet.child()
+    protocols.add(PROTOCOL_TYPE[ip_header.get_ip_p()])
 
 def main():
     filename = sys.argv[1]
@@ -379,10 +379,10 @@ def main():
         pc = pcapy.open_offline(filename)
     except Exception as e:
         print('Cannot open capture file: %s' % filename)
-        return -1
+        sys.exit(1)
 
     pc.dispatch(-1, receive_packets)
-    print(protocol_types)
+    print(protocols)
 
 if __name__ == '__main__':
     main()

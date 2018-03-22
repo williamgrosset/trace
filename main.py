@@ -339,6 +339,13 @@ def result_logger(connections):
     else:
         print('No complete TCP connections.')
 
+PROTOCOL_TYPE = {
+    1: 'ICMP',
+    2: 'IGMP',
+    6: 'TCP',
+    17: 'UDP'
+}
+
 def receive_packets(header, data):
     decoder = ImpactDecoder.EthDecoder()
     ethernet_packet = decoder.decode(data)
@@ -350,7 +357,7 @@ def receive_packets(header, data):
     ip_header = ethernet_packet.child()
 
     # TODO: map protocol values to strings (1: 'ICMP') and add to set
-    print(ip_header.get_ip_p())
+    print(PROTOCOL_TYPE[ip_header.get_ip_p()])
 
 def main():
     filename = sys.argv[1]

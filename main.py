@@ -346,8 +346,8 @@ PROTOCOL_TYPE = {
     17: 'UDP'
 }
 protocols = set([])
-source = ''
-destination = ''
+ult_source = ''
+ult_destination = ''
 intermediate_list = []
 
 
@@ -375,10 +375,13 @@ def receive_packets(header, data):
     print(ethernet_packet)
 
     ip_header = ethernet_packet.child()
-    protocols.add(ip_header.get_ip_p())
-    if not source and PROTOCOL_TYPE[ip_header.get_ip_p()] == 'UDP':
-        global source
-        source = ip_header.get_ip_src()
+    source = ip_header.get_ip_src()
+    protocol = ip_header.get_ip_p()
+
+    protocols.add(protocol)
+    if not ult_source and PROTOCOL_TYPE[protocol] == 'UDP':
+        global ult_source
+        ult_source = source
 
 def main():
     filename = sys.argv[1]
@@ -390,7 +393,7 @@ def main():
 
     pc.dispatch(-1, receive_packets)
     print(protocols)
-    print(source)
+    print(ult_source)
 
 if __name__ == '__main__':
     main()

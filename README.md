@@ -17,7 +17,7 @@
 + FINISH R2 and add pdf
 
 ## Overview
-This project was an assignment for the [Computer Communications and Networks](https://github.com/williamgrosset/trace/blob/master/csc361_p3.pdf) class at the University of Victoria. The purpose of this program is to identify and analyze IP datagrams in a capture file. **TODO**: The program will echo output for each connection regarding it's status, duration, total packets and bytes sent/received, average round-trip time, and more.
+This project was an assignment for the [Computer Communications and Networks](https://github.com/williamgrosset/trace/blob/master/csc361_p3.pdf) class at the University of Victoria. The purpose of this program is to identify and analyze IP datagrams in a capture file. The program will echo information such as addresses of source, destination, and intermediate hosts/routers, protocol types, fragmented datagrams, and average round-trip times.
 
 ### Usage 
 **Prerequisite**: `Python 2.7.x` (tested with `Python 2.7.10`)

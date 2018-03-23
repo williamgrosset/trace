@@ -39,12 +39,15 @@ def receive_packets(header, data):
     destination = ip_header.get_ip_dst()
     protocol = ip_header.get_ip_p()
 
-    # Identify source
+    # Identify ultimate source
     if not ult_source and PROTOCOL_TYPE[protocol] == 'UDP':
         global ult_source
         ult_source = source
 
-    # TODO: Identify destination
+    # TODO: Identify ultimate destination
+    if not ult_destination and PROTOCOL_TYPE[protocol] == 'UDP':
+        global ult_destination
+        ult_destination = destination
 
     # Identify intermediate(s)
     if source not in intermediate_list and PROTOCOL_TYPE[protocol] == 'ICMP' and destination == ult_source:

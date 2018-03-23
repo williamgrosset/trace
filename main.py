@@ -4,7 +4,7 @@ import pcapy
 
 ult_source = ''
 ult_destination = ''
-intermediate_set = set([])
+intermediate_list = []
 protocol_set = set([])
 PROTOCOL_TYPE = {
     1: 'ICMP',
@@ -36,6 +36,7 @@ def receive_packets(header, data):
 
     ip_header = ethernet_packet.child()
     source = ip_header.get_ip_src()
+    destination = ip_header.get_ip_dst()
     protocol = ip_header.get_ip_p()
 
     # Identify source
@@ -45,7 +46,11 @@ def receive_packets(header, data):
 
     # TODO: Identify destination
 
-    # TODO: Identify intermediate(s)
+    # Identify intermediate(s)
+    if source not in intermediate_list and PROTOCOL_TYPE[protocol] == 'ICMP' and destination == ult_source:
+        # Type 11: TTL-exceeded
+        if ip_header.child().get_icmp_type() == 11:
+            intermediate_list.append(source)
 
     # Add protocol type to set
     protocol_set.add(protocol)
@@ -66,6 +71,7 @@ def main():
 
     # Testing
     print(protocol_set)
+    print(intermediate_list)
     print(ult_source)
 
 if __name__ == '__main__':

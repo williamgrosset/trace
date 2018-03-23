@@ -5,6 +5,7 @@ import pcapy
 ult_source = ''
 ult_destination = ''
 intermediate_list = []
+fragment_dict = {}
 protocol_set = set([])
 PROTOCOL_TYPE = {
     1: 'ICMP',
@@ -38,6 +39,8 @@ def receive_packets(header, data):
     source = ip_header.get_ip_src()
     destination = ip_header.get_ip_dst()
     protocol = ip_header.get_ip_p()
+    identification = ip_header.get_ip_id()
+    offset = ip_header.get_ip_off()
 
     # Identify ultimate source
     if not ult_source and PROTOCOL_TYPE[protocol] == 'UDP':
@@ -58,7 +61,17 @@ def receive_packets(header, data):
     # Add protocol type to set
     protocol_set.add(protocol)
 
-    # TODO: Identify datagram fragments and last fragment offset
+    # Identify datagram fragments and last fragment offset
+    if not ip_header.get_ip_df() and (ip_header.get_ip_mf() == 1 or offset > 0):
+        # Store in dictionary: identification -> (count, offset)
+        if not fragment_dict.has_key(identification):
+            fragment_dict[identification] = (1, offset)
+        else:
+            count = fragment_dict[identification][0]
+            count += 1
+            fragment_dict[identification] = (count, offset)
+
+    # TODO: RTT/Standard Deviation
 
 def main():
     filename = sys.argv[1]
@@ -71,11 +84,7 @@ def main():
     pc.dispatch(-1, receive_packets)
     #calculate_round_trip_time()
     #print_results()
-
-    # Testing
-    print(protocol_set)
-    print(intermediate_list)
-    print(ult_source)
+    print(fragment_dict)
 
 if __name__ == '__main__':
     main()

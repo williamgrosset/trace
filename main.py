@@ -1,6 +1,6 @@
 from impacket import ImpactDecoder, ImpactPacket
-import sys
 import pcapy
+import sys
 
 ult_source = ''
 ult_destination = ''
@@ -23,8 +23,7 @@ def print_results():
     print('The offset of the last fragment is:')
     print('The avg RTT between IP HERE and IP HERE is: VALUE ms, the s.d. is: VALUE ms')
 
-def calculate_round_trip_time():
-    print()
+#def calculate_round_trip_time():
 
 def receive_packets(header, data):
     decoder = ImpactDecoder.EthDecoder()
@@ -42,7 +41,7 @@ def receive_packets(header, data):
     identification = ip_header.get_ip_id()
     offset = ip_header.get_ip_off()
 
-    # Identify ultimate source
+    # TODO: Identify ultimate source
     if not ult_source and PROTOCOL_TYPE[protocol] == 'UDP':
         global ult_source
         ult_source = source
@@ -53,10 +52,9 @@ def receive_packets(header, data):
         ult_destination = destination
 
     # Identify intermediate(s)
-    if source not in intermediate_list and PROTOCOL_TYPE[protocol] == 'ICMP' and destination == ult_source:
-        # Type 11: TTL-exceeded
-        if ip_header.child().get_icmp_type() == 11:
-            intermediate_list.append(source)
+    if (source not in intermediate_list and PROTOCOL_TYPE[protocol] == 'ICMP' and destination == ult_source and
+     ip_header.child().get_icmp_type() == 11):
+        intermediate_list.append(source)
 
     # Add protocol type to set
     protocol_set.add(protocol)
@@ -71,7 +69,7 @@ def receive_packets(header, data):
             count += 1
             fragment_dict[identification] = (count, offset)
 
-    # TODO: RTT/Standard Deviation
+    # TODO: Grab values needed for avg RTT/Standard Deviation
 
 def main():
     filename = sys.argv[1]
@@ -84,7 +82,6 @@ def main():
     pc.dispatch(-1, receive_packets)
     #calculate_round_trip_time()
     #print_results()
-    print(fragment_dict)
 
 if __name__ == '__main__':
     main()

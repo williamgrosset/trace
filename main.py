@@ -39,20 +39,22 @@ def receive_packets(header, data):
     destination = ip_header.get_ip_dst()
     protocol = ip_header.get_ip_p()
     identification = ip_header.get_ip_id()
-    offset = ip_header.get_ip_off()
+    offset = ip_header.get_ip_off() << 3;
+    print(offset)
 
-    # TODO: Identify ultimate source
+    # TODO: Handle identifying source/destination for both Linux/Windows
+    # Identify ultimate source
     if not ult_source and PROTOCOL_TYPE[protocol] == 'UDP':
         global ult_source
         ult_source = source
 
-    # TODO: Identify ultimate destination
+    # Identify ultimate destination
     if not ult_destination and PROTOCOL_TYPE[protocol] == 'UDP':
         global ult_destination
         ult_destination = destination
 
     # Identify intermediate(s)
-    if (source not in intermediate_list and PROTOCOL_TYPE[protocol] == 'ICMP' and destination == ult_source and
+    if (source not in intermediate_list and destination == ult_source and PROTOCOL_TYPE[protocol] == 'ICMP' and
      ip_header.child().get_icmp_type() == 11):
         intermediate_list.append(source)
 
@@ -82,6 +84,8 @@ def main():
     pc.dispatch(-1, receive_packets)
     #calculate_round_trip_time()
     #print_results()
+    print(intermediate_list)
+    print(fragment_dict)
 
 if __name__ == '__main__':
     main()

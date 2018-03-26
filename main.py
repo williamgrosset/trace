@@ -39,7 +39,7 @@ def receive_packets(header, data):
     destination = ip_header.get_ip_dst()
     protocol = ip_header.get_ip_p()
     identification = ip_header.get_ip_id()
-    offset = ip_header.get_ip_off() << 3;
+    offset = ip_header.get_ip_off() * 8;
     print(offset)
 
     # TODO: Handle identifying source/destination for both Linux/Windows

@@ -7,6 +7,7 @@ ult_destination = ''
 intermediate_list = []
 fragment_dict = {}
 protocol_set = set([])
+# TODO: Exclude support for TCP/IGMP
 PROTOCOL_TYPE = {
     1: 'ICMP',
     2: 'IGMP',
@@ -40,9 +41,7 @@ def receive_packets(header, data):
     protocol = ip_header.get_ip_p()
     identification = ip_header.get_ip_id()
     offset = ip_header.get_ip_off() * 8;
-    print(offset)
 
-    # TODO: Handle identifying source/destination for both Linux/Windows
     # Identify ultimate source
     if not ult_source and PROTOCOL_TYPE[protocol] == 'UDP':
         global ult_source
@@ -86,6 +85,7 @@ def main():
     #print_results()
     print(intermediate_list)
     print(fragment_dict)
+    print(protocol_set)
 
 if __name__ == '__main__':
     main()

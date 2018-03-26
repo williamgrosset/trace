@@ -4,8 +4,6 @@
 ..add gif here..
 
 ## TODO
-+ Identify ultimate source/destination
-  + Handle identifying source/destination for both Linux/Windows
 + Identify correct order of intermediate routers
 + Compute avg RTT and standard deviation between source -> intermediate(s) and source -> destination
   + Need to store all RTTs for pairs

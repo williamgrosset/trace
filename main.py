@@ -4,7 +4,6 @@ import sys
 
 ult_source = ''
 ult_destination = ''
-intermediate_list = []
 fragment_dict = {}
 datagram_pairs_dict = {}
 protocol_set = set([])
@@ -73,11 +72,6 @@ def receive_packets(header, data):
                 request_ip_header = datagram_pairs_dict[(destination, udp_header.get_uh_sport())][0]
                 datagram_pairs_dict[(destination, udp_header.get_uh_sport())] = (request_ip_header, ip_header)
 
-        # Identify intermediate(s)
-        if (source not in intermediate_list and destination == ult_source and protocol_type == 'ICMP' and
-         ip_header.child().get_icmp_type() == 11):
-            intermediate_list.append(source)
-
         # Add protocol type to set
         protocol_set.add(protocol)
 
@@ -102,7 +96,6 @@ def main():
     pc.dispatch(-1, receive_packets)
     print(ult_source)
     print(ult_destination)
-    print(intermediate_list)
     print(fragment_dict)
     print(datagram_pairs_dict)
     print(protocol_set)

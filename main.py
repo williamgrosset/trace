@@ -6,6 +6,7 @@ ult_source = ''
 ult_destination = ''
 intermediate_list = []
 fragment_dict = {}
+datagram_pairs_dict = {}
 protocol_set = set([])
 # TODO: Exclude support for TCP/IGMP
 PROTOCOL_TYPES = {
@@ -57,6 +58,8 @@ def receive_packets(header, data):
             global ult_destination
             ult_destination = destination
 
+        # TODO: Grab all appropriate pairs for UDP/ICMP or ICMP/ICMP match
+
         # Identify intermediate(s)
         if (source not in intermediate_list and destination == ult_source and protocol_type == 'ICMP' and
          ip_header.child().get_icmp_type() == 11):
@@ -67,15 +70,13 @@ def receive_packets(header, data):
 
         # Identify datagram fragments and last fragment offset
         if not ip_header.get_ip_df() and (ip_header.get_ip_mf() == 1 or offset > 0):
-            # Store in dictionary: identification -> (count, offset)
+            # Store in dictionary: identification # -> (count, offset)
             if not fragment_dict.has_key(identification):
                 fragment_dict[identification] = (1, offset)
             else:
                 count = fragment_dict[identification][0]
                 count += 1
                 fragment_dict[identification] = (count, offset)
-
-        # TODO: Grab values needed for avg RTT/Standard Deviation
 
 def main():
     filename = sys.argv[1]
@@ -86,8 +87,6 @@ def main():
         sys.exit(1)
 
     pc.dispatch(-1, receive_packets)
-    #calculate_round_trip_time()
-    #print_results()
     print(ult_source)
     print(ult_destination)
     print(intermediate_list)

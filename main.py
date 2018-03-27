@@ -8,7 +8,7 @@ intermediate_list = []
 fragment_dict = {}
 protocol_set = set([])
 # TODO: Exclude support for TCP/IGMP
-PROTOCOL_TYPE = {
+PROTOCOL_TYPES = {
     1: 'ICMP',
     2: 'IGMP',
     6: 'TCP',
@@ -41,38 +41,41 @@ def receive_packets(header, data):
     protocol = ip_header.get_ip_p()
     identification = ip_header.get_ip_id()
     offset = ip_header.get_ip_off() * 8;
+    protocol_type = PROTOCOL_TYPES[protocol]
 
-    # Identify ultimate source
-    if not ult_source and (PROTOCOL_TYPE[protocol] == 'UDP' or (PROTOCOL_TYPE[protocol] == 'ICMP' and
-     ip_header.child().get_icmp_type() == 8)):
-        global ult_source
-        ult_source = source
+    # Only target UDP/ICMP packets (ignore DNS)
+    if protocol_type == 'ICMP' or (protocol_type == 'UDP' and not
+     (ip_header.child().get_uh_sport() == 53 or ip_header.child().get_uh_dport() == 53)):
 
-    # Identify ultimate destination
-    if not ult_destination and (PROTOCOL_TYPE[protocol] == 'UDP' or (PROTOCOL_TYPE[protocol] == 'ICMP' and
-     ip_header.child().get_icmp_type() == 8)):
-        global ult_destination
-        ult_destination = destination
+        # Identify ultimate source
+        if not ult_source:
+            global ult_source
+            ult_source = source
 
-    # Identify intermediate(s)
-    if (source not in intermediate_list and destination == ult_source and PROTOCOL_TYPE[protocol] == 'ICMP' and
-     ip_header.child().get_icmp_type() == 11):
-        intermediate_list.append(source)
+        # Identify ultimate destination
+        if not ult_destination:
+            global ult_destination
+            ult_destination = destination
 
-    # Add protocol type to set
-    protocol_set.add(protocol)
+        # Identify intermediate(s)
+        if (source not in intermediate_list and destination == ult_source and protocol_type == 'ICMP' and
+         ip_header.child().get_icmp_type() == 11):
+            intermediate_list.append(source)
 
-    # Identify datagram fragments and last fragment offset
-    if not ip_header.get_ip_df() and (ip_header.get_ip_mf() == 1 or offset > 0):
-        # Store in dictionary: identification -> (count, offset)
-        if not fragment_dict.has_key(identification):
-            fragment_dict[identification] = (1, offset)
-        else:
-            count = fragment_dict[identification][0]
-            count += 1
-            fragment_dict[identification] = (count, offset)
+        # Add protocol type to set
+        protocol_set.add(protocol)
 
-    # TODO: Grab values needed for avg RTT/Standard Deviation
+        # Identify datagram fragments and last fragment offset
+        if not ip_header.get_ip_df() and (ip_header.get_ip_mf() == 1 or offset > 0):
+            # Store in dictionary: identification -> (count, offset)
+            if not fragment_dict.has_key(identification):
+                fragment_dict[identification] = (1, offset)
+            else:
+                count = fragment_dict[identification][0]
+                count += 1
+                fragment_dict[identification] = (count, offset)
+
+        # TODO: Grab values needed for avg RTT/Standard Deviation
 
 def main():
     filename = sys.argv[1]

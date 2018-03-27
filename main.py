@@ -56,11 +56,9 @@ def receive_packets(header, data):
             ult_destination = destination
 
         # TODO: Grab all appropriate pairs for UDP/ICMP or ICMP/ICMP match
-        # TEMPO: LINUX SUPPORT
         # IF UDP
         if protocol_type == 'UDP':
             if not datagram_pairs_dict.has_key((source, ip_header.child().get_uh_sport())):
-                print(ip_header.child().get_uh_sport())
                 datagram_pairs_dict[(source, ip_header.child().get_uh_sport())] = (ip_header, None)
             #else:
                 #og_ip_header = datagram_pairs_dict[(destination, ip_header.child().get_uh_sport())][0]
@@ -72,8 +70,8 @@ def receive_packets(header, data):
             if not datagram_pairs_dict.has_key((destination, udp_header.get_uh_sport())):
                 datagram_pairs_dict[(source, udp_header.get_uh_sport())] = (ip_header, None)
             else:
-                og_ip_header = datagram_pairs_dict[(destination, udp_header.get_uh_sport())][0]
-                datagram_pairs_dict[(destination, udp_header.get_uh_sport())] = (og_ip_header, ip_header)
+                request_ip_header = datagram_pairs_dict[(destination, udp_header.get_uh_sport())][0]
+                datagram_pairs_dict[(destination, udp_header.get_uh_sport())] = (request_ip_header, ip_header)
 
         # Identify intermediate(s)
         if (source not in intermediate_list and destination == ult_source and protocol_type == 'ICMP' and
@@ -106,9 +104,7 @@ def main():
     print(ult_destination)
     print(intermediate_list)
     print(fragment_dict)
-    print(datagram_pairs_dict.values()[0])
-    print(datagram_pairs_dict.values()[0][0])
-    print(datagram_pairs_dict.values()[0][1])
+    print(datagram_pairs_dict)
     print(protocol_set)
 
 if __name__ == '__main__':

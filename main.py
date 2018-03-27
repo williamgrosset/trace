@@ -34,8 +34,6 @@ def receive_packets(header, data):
     if ethernet_packet.get_ether_type() != ImpactPacket.IP.ethertype:
         return
 
-    print(ethernet_packet)
-
     ip_header = ethernet_packet.child()
     source = ip_header.get_ip_src()
     destination = ip_header.get_ip_dst()
@@ -47,7 +45,6 @@ def receive_packets(header, data):
     # Only target UDP/ICMP packets (ignore DNS)
     if protocol_type == 'ICMP' or (protocol_type == 'UDP' and not
      (ip_header.child().get_uh_sport() == 53 or ip_header.child().get_uh_dport() == 53)):
-
         # Identify ultimate source
         if not ult_source:
             global ult_source
@@ -59,6 +56,24 @@ def receive_packets(header, data):
             ult_destination = destination
 
         # TODO: Grab all appropriate pairs for UDP/ICMP or ICMP/ICMP match
+        # TEMPO: LINUX SUPPORT
+        # IF UDP
+        if protocol_type == 'UDP':
+            if not datagram_pairs_dict.has_key((source, ip_header.child().get_uh_sport())):
+                print(ip_header.child().get_uh_sport())
+                datagram_pairs_dict[(source, ip_header.child().get_uh_sport())] = (ip_header, None)
+            #else:
+                #og_ip_header = datagram_pairs_dict[(destination, ip_header.child().get_uh_sport())][0]
+                #datagram_pairs_dict[(destination, ip_header.child().get_uh_sport())] = (og_ip_header, ip_header)
+        # ELSE ICMP
+        else:
+            udp_header = ImpactDecoder.IPDecoder().decode(ip_header.child().get_data_as_string()).child()
+
+            if not datagram_pairs_dict.has_key((destination, udp_header.get_uh_sport())):
+                datagram_pairs_dict[(source, udp_header.get_uh_sport())] = (ip_header, None)
+            else:
+                og_ip_header = datagram_pairs_dict[(destination, udp_header.get_uh_sport())][0]
+                datagram_pairs_dict[(destination, udp_header.get_uh_sport())] = (og_ip_header, ip_header)
 
         # Identify intermediate(s)
         if (source not in intermediate_list and destination == ult_source and protocol_type == 'ICMP' and
@@ -91,6 +106,9 @@ def main():
     print(ult_destination)
     print(intermediate_list)
     print(fragment_dict)
+    print(datagram_pairs_dict.values()[0])
+    print(datagram_pairs_dict.values()[0][0])
+    print(datagram_pairs_dict.values()[0][1])
     print(protocol_set)
 
 if __name__ == '__main__':

@@ -4,11 +4,13 @@ import sys
 
 PROTOCOL_TYPES = {
     1: 'ICMP',
+    2: 'IGMP',
+    6: 'TCP',
     17: 'UDP'
 }
 
-ult_source_ip = ''        # Temporary (?)
-ult_destination_ip = ''   # Temporary (?)
+ult_source_ip = ''
+ult_destination_ip = ''
 protocol_set = set([])
 fragment_dict = {}
 datagram_pairs_dict = {}

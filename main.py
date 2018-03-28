@@ -7,11 +7,11 @@ PROTOCOL_TYPES = {
     17: 'UDP'
 }
 
-ult_source_ip = ''
-ult_destination_ip = ''
+ult_source_ip = ''        # Temporary (?)
+ult_destination_ip = ''   # Temporary (?)
+protocol_set = set([])
 fragment_dict = {}
 datagram_pairs_dict = {}
-protocol_set = set([])
 is_windows = False
 
 def print_results():
@@ -22,8 +22,6 @@ def print_results():
     print('The number of fragments created from the original datagram is:')
     print('The offset of the last fragment is:')
     print('The avg RTT between IP HERE and IP HERE is: VALUE ms, the s.d. is: VALUE ms')
-
-#def calculate_round_trip_time():
 
 def receive_packets(header, data):
     decoder = ImpactDecoder.EthDecoder()
@@ -58,6 +56,9 @@ def receive_packets(header, data):
             global ult_destination_ip
             ult_destination_ip = destination_ip
 
+        # Add protocol type to set
+        protocol_set.add(protocol_type)
+
         # TODO: Grab all appropriate pairs for UDP/ICMP or ICMP/ICMP match
         if not is_windows:
             # IF UDP
@@ -73,10 +74,7 @@ def receive_packets(header, data):
                     request_ip_header = datagram_pairs_dict[(destination_ip, udp_header.get_uh_sport())][0]
                     datagram_pairs_dict[(destination_ip, udp_header.get_uh_sport())] = (request_ip_header, ip_header)
 
-        # Add protocol type to set
-        protocol_set.add(protocol_type)
-
-        # Identify datagram fragments and last fragment offset
+        # TODO: Identify datagram fragments and last fragment offset
         if not ip_header.get_ip_df() and (ip_header.get_ip_mf() == 1 or fragment_offset > 0):
             # Store in dictionary: identification # -> (count, fragment_offset)
             if not fragment_dict.has_key(identification):

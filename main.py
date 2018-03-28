@@ -39,7 +39,7 @@ def receive_packets(header, data):
     destination_ip = ip_header.get_ip_dst()
     protocol = ip_header.get_ip_p()
     identification = ip_header.get_ip_id()
-    offset = ip_header.get_ip_off() * 8;
+    fragment_offset = ip_header.get_ip_off() * 8;
     protocol_type = PROTOCOL_TYPES[protocol]
 
     # Only target UDP/ICMP packets (ignore DNS)
@@ -83,14 +83,14 @@ def receive_packets(header, data):
         protocol_set.add(protocol)
 
         # Identify datagram fragments and last fragment offset
-        if not ip_header.get_ip_df() and (ip_header.get_ip_mf() == 1 or offset > 0):
-            # Store in dictionary: identification # -> (count, offset)
+        if not ip_header.get_ip_df() and (ip_header.get_ip_mf() == 1 or fragment_offset > 0):
+            # Store in dictionary: identification # -> (count, fragment_offset)
             if not fragment_dict.has_key(identification):
-                fragment_dict[identification] = (1, offset)
+                fragment_dict[identification] = (1, fragment_offset)
             else:
                 count = fragment_dict[identification][0]
                 count += 1
-                fragment_dict[identification] = (count, offset)
+                fragment_dict[identification] = (count, fragment_offset)
 
 def main():
     filename = sys.argv[1]

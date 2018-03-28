@@ -2,6 +2,7 @@ from impacket import ImpactDecoder, ImpactPacket
 import pcapy
 import sys
 
+# TODO: Remove support for non-required types
 PROTOCOL_TYPES = {
     1: 'ICMP',
     2: 'IGMP',
@@ -9,8 +10,8 @@ PROTOCOL_TYPES = {
     17: 'UDP'
 }
 
-ult_source_ip = ''
-ult_destination_ip = ''
+ult_source_ip = ''          # Temporary (?)
+ult_destination_ip = ''     # Temporary (?)
 protocol_set = set([])
 fragment_dict = {}
 datagram_pairs_dict = {}
@@ -33,18 +34,18 @@ def receive_packets(header, data):
         return
 
     ip_header = ethernet_packet.child()
-    source_ip = ip_header.get_ip_src()
-    destination_ip = ip_header.get_ip_dst()
-    protocol = ip_header.get_ip_p()
-    identification = ip_header.get_ip_id()
-    fragment_offset = ip_header.get_ip_off() * 8;
-    protocol_type = PROTOCOL_TYPES[protocol]
+    protocol = PROTOCOL_TYPES[ip_header.get_ip_p()]
 
     # Only target UDP/ICMP packets (ignore DNS)
-    if protocol_type == 'ICMP' or (protocol_type == 'UDP' and not
+    if protocol == 'ICMP' or (protocol == 'UDP' and not
      (ip_header.child().get_uh_sport() == 53 or ip_header.child().get_uh_dport() == 53)):
+        source_ip = ip_header.get_ip_src()
+        destination_ip = ip_header.get_ip_dst()
+        identification = ip_header.get_ip_id()
+        fragment_offset = ip_header.get_ip_off() * 8;
+
         # Identify if Windows capture file
-        if not ult_source_ip and not ult_destination_ip and protocol_type == 'ICMP' and ip_header.child().get_icmp_type() == 8:
+        if not ult_source_ip and not ult_destination_ip and protocol == 'ICMP' and ip_header.child().get_icmp_type() == 8:
             global is_windows
             is_windows = True
 
@@ -59,12 +60,12 @@ def receive_packets(header, data):
             ult_destination_ip = destination_ip
 
         # Add protocol type to set
-        protocol_set.add(protocol_type)
+        protocol_set.add(protocol)
 
         # TODO: Grab all appropriate pairs for UDP/ICMP or ICMP/ICMP match
         if not is_windows:
             # IF UDP
-            if protocol_type == 'UDP':
+            if protocol == 'UDP':
                 if not datagram_pairs_dict.has_key((source_ip, ip_header.child().get_uh_sport())):
                     datagram_pairs_dict[(source_ip, ip_header.child().get_uh_sport())] = (ip_header, None)
             # ELSE ICMP

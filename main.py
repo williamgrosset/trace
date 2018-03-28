@@ -80,7 +80,7 @@ def receive_packets(header, data):
                     datagram_pairs_dict[(destination_ip, udp_header.get_uh_sport())] = (request_ip_header, ip_header)
 
         # Add protocol type to set
-        protocol_set.add(protocol)
+        protocol_set.add(protocol_type)
 
         # Identify datagram fragments and last fragment offset
         if not ip_header.get_ip_df() and (ip_header.get_ip_mf() == 1 or fragment_offset > 0):

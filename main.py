@@ -41,7 +41,6 @@ def receive_packets(header, data):
      (ip_header.child().get_uh_sport() == 53 or ip_header.child().get_uh_dport() == 53)):
         source_ip = ip_header.get_ip_src()
         destination_ip = ip_header.get_ip_dst()
-        identification = ip_header.get_ip_id()
         fragment_offset = ip_header.get_ip_off() * 8;
 
         # Identify if Windows capture file
@@ -80,6 +79,7 @@ def receive_packets(header, data):
         # TODO: Identify datagram fragments and last fragment offset
         if not ip_header.get_ip_df() and (ip_header.get_ip_mf() == 1 or fragment_offset > 0):
             # Store in dictionary: identification # -> (count, fragment_offset)
+            identification = ip_header.get_ip_id()
             if not fragment_dict.has_key(identification):
                 fragment_dict[identification] = (1, fragment_offset)
             else:

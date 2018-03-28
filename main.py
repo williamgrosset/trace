@@ -64,13 +64,9 @@ def receive_packets(header, data):
             if protocol_type == 'UDP':
                 if not datagram_pairs_dict.has_key((source_ip, ip_header.child().get_uh_sport())):
                     datagram_pairs_dict[(source_ip, ip_header.child().get_uh_sport())] = (ip_header, None)
-                #else:
-                    #og_ip_header = datagram_pairs_dict[(destination_ip, ip_header.child().get_uh_sport())][0]
-                    #datagram_pairs_dict[(destination_ip, ip_header.child().get_uh_sport())] = (og_ip_header, ip_header)
             # ELSE ICMP
             else:
                 udp_header = ImpactDecoder.IPDecoder().decode(ip_header.child().get_data_as_string()).child()
-
                 if not datagram_pairs_dict.has_key((destination_ip, udp_header.get_uh_sport())):
                     datagram_pairs_dict[(source_ip, udp_header.get_uh_sport())] = (ip_header, None)
                 else:

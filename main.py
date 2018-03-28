@@ -14,6 +14,7 @@ PROTOCOL_TYPES = {
     6: 'TCP',
     17: 'UDP'
 }
+is_windows = False
 
 def print_results():
     print('The IP address of the source node:')
@@ -44,6 +45,11 @@ def receive_packets(header, data):
     # Only target UDP/ICMP packets (ignore DNS)
     if protocol_type == 'ICMP' or (protocol_type == 'UDP' and not
      (ip_header.child().get_uh_sport() == 53 or ip_header.child().get_uh_dport() == 53)):
+        # Identify if Windows capture file
+        if not ult_source and not ult_destination and protocol_type == 'ICMP' and ip_header.child().get_icmp_type() == 8:
+            global is_windows
+            is_windows = True
+
         # Identify ultimate source
         if not ult_source:
             global ult_source
@@ -55,22 +61,23 @@ def receive_packets(header, data):
             ult_destination = destination
 
         # TODO: Grab all appropriate pairs for UDP/ICMP or ICMP/ICMP match
-        # IF UDP
-        if protocol_type == 'UDP':
-            if not datagram_pairs_dict.has_key((source, ip_header.child().get_uh_sport())):
-                datagram_pairs_dict[(source, ip_header.child().get_uh_sport())] = (ip_header, None)
-            #else:
-                #og_ip_header = datagram_pairs_dict[(destination, ip_header.child().get_uh_sport())][0]
-                #datagram_pairs_dict[(destination, ip_header.child().get_uh_sport())] = (og_ip_header, ip_header)
-        # ELSE ICMP
-        else:
-            udp_header = ImpactDecoder.IPDecoder().decode(ip_header.child().get_data_as_string()).child()
-
-            if not datagram_pairs_dict.has_key((destination, udp_header.get_uh_sport())):
-                datagram_pairs_dict[(source, udp_header.get_uh_sport())] = (ip_header, None)
+        if not is_windows:
+            # IF UDP
+            if protocol_type == 'UDP':
+                if not datagram_pairs_dict.has_key((source, ip_header.child().get_uh_sport())):
+                    datagram_pairs_dict[(source, ip_header.child().get_uh_sport())] = (ip_header, None)
+                #else:
+                    #og_ip_header = datagram_pairs_dict[(destination, ip_header.child().get_uh_sport())][0]
+                    #datagram_pairs_dict[(destination, ip_header.child().get_uh_sport())] = (og_ip_header, ip_header)
+            # ELSE ICMP
             else:
-                request_ip_header = datagram_pairs_dict[(destination, udp_header.get_uh_sport())][0]
-                datagram_pairs_dict[(destination, udp_header.get_uh_sport())] = (request_ip_header, ip_header)
+                udp_header = ImpactDecoder.IPDecoder().decode(ip_header.child().get_data_as_string()).child()
+
+                if not datagram_pairs_dict.has_key((destination, udp_header.get_uh_sport())):
+                    datagram_pairs_dict[(source, udp_header.get_uh_sport())] = (ip_header, None)
+                else:
+                    request_ip_header = datagram_pairs_dict[(destination, udp_header.get_uh_sport())][0]
+                    datagram_pairs_dict[(destination, udp_header.get_uh_sport())] = (request_ip_header, ip_header)
 
         # Add protocol type to set
         protocol_set.add(protocol)

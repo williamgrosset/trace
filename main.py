@@ -2,18 +2,16 @@ from impacket import ImpactDecoder, ImpactPacket
 import pcapy
 import sys
 
+PROTOCOL_TYPES = {
+    1: 'ICMP',
+    17: 'UDP'
+}
+
 ult_source_ip = ''
 ult_destination_ip = ''
 fragment_dict = {}
 datagram_pairs_dict = {}
 protocol_set = set([])
-# TODO: Exclude support for TCP/IGMP
-PROTOCOL_TYPES = {
-    1: 'ICMP',
-    2: 'IGMP',
-    6: 'TCP',
-    17: 'UDP'
-}
 is_windows = False
 
 def print_results():

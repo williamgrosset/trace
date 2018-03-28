@@ -61,8 +61,25 @@ def receive_packets(header, data):
         # Add protocol type to set
         protocol_set.add(protocol)
 
-        # TODO: Grab all appropriate pairs for UDP/ICMP or ICMP/ICMP match
-        if not is_windows:
+        # TODO: Grab all appropriate IP pairs for ICMP/ICMP or UDP/ICMP datagrams
+        if is_windows:
+            if protocol != 'ICMP':
+                return
+
+            icmp_header = ip_header.child()
+            if icmp_header.get_icmp_type() == 8:
+                seq_num = icmp_header.get_icmp_seq()
+            # ICMP Type-11 nested with ICMP Type-8
+            else:
+                icmp_header = ImpactDecoder.IPDecoder().decode(ip_header.child().get_data_as_string()).child()
+                seq_num = icmp_header.get_icmp_seq()
+
+            if not datagram_pairs_dict.has_key((destination_ip, seq_num)):
+                datagram_pairs_dict[(source_ip, seq_num)] = (ip_header, None)
+            else:
+                request_ip_header = datagram_pairs_dict[(destination_ip, seq_num)][0]
+                datagram_pairs_dict[(destination_ip, seq_num)] = (request_ip_header, ip_header)
+        else:
             # IF UDP
             if protocol == 'UDP':
                 if not datagram_pairs_dict.has_key((source_ip, ip_header.child().get_uh_sport())):
@@ -96,9 +113,7 @@ def main():
     pc.dispatch(-1, receive_packets)
     print(ult_source_ip)
     print(ult_destination_ip)
-    print(fragment_dict)
     print(datagram_pairs_dict)
-    print(protocol_set)
 
 if __name__ == '__main__':
     main()

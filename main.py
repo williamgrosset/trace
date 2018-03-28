@@ -2,8 +2,8 @@ from impacket import ImpactDecoder, ImpactPacket
 import pcapy
 import sys
 
-ult_source = ''
-ult_destination = ''
+ult_source_ip = ''
+ult_destination_ip = ''
 fragment_dict = {}
 datagram_pairs_dict = {}
 protocol_set = set([])
@@ -35,8 +35,8 @@ def receive_packets(header, data):
         return
 
     ip_header = ethernet_packet.child()
-    source = ip_header.get_ip_src()
-    destination = ip_header.get_ip_dst()
+    source_ip = ip_header.get_ip_src()
+    destination_ip = ip_header.get_ip_dst()
     protocol = ip_header.get_ip_p()
     identification = ip_header.get_ip_id()
     offset = ip_header.get_ip_off() * 8;
@@ -46,38 +46,38 @@ def receive_packets(header, data):
     if protocol_type == 'ICMP' or (protocol_type == 'UDP' and not
      (ip_header.child().get_uh_sport() == 53 or ip_header.child().get_uh_dport() == 53)):
         # Identify if Windows capture file
-        if not ult_source and not ult_destination and protocol_type == 'ICMP' and ip_header.child().get_icmp_type() == 8:
+        if not ult_source_ip and not ult_destination_ip and protocol_type == 'ICMP' and ip_header.child().get_icmp_type() == 8:
             global is_windows
             is_windows = True
 
         # Identify ultimate source
-        if not ult_source:
-            global ult_source
-            ult_source = source
+        if not ult_source_ip:
+            global ult_source_ip
+            ult_source_ip = source_ip
 
         # Identify ultimate destination
-        if not ult_destination:
-            global ult_destination
-            ult_destination = destination
+        if not ult_destination_ip:
+            global ult_destination_ip
+            ult_destination_ip = destination_ip
 
         # TODO: Grab all appropriate pairs for UDP/ICMP or ICMP/ICMP match
         if not is_windows:
             # IF UDP
             if protocol_type == 'UDP':
-                if not datagram_pairs_dict.has_key((source, ip_header.child().get_uh_sport())):
-                    datagram_pairs_dict[(source, ip_header.child().get_uh_sport())] = (ip_header, None)
+                if not datagram_pairs_dict.has_key((source_ip, ip_header.child().get_uh_sport())):
+                    datagram_pairs_dict[(source_ip, ip_header.child().get_uh_sport())] = (ip_header, None)
                 #else:
-                    #og_ip_header = datagram_pairs_dict[(destination, ip_header.child().get_uh_sport())][0]
-                    #datagram_pairs_dict[(destination, ip_header.child().get_uh_sport())] = (og_ip_header, ip_header)
+                    #og_ip_header = datagram_pairs_dict[(destination_ip, ip_header.child().get_uh_sport())][0]
+                    #datagram_pairs_dict[(destination_ip, ip_header.child().get_uh_sport())] = (og_ip_header, ip_header)
             # ELSE ICMP
             else:
                 udp_header = ImpactDecoder.IPDecoder().decode(ip_header.child().get_data_as_string()).child()
 
-                if not datagram_pairs_dict.has_key((destination, udp_header.get_uh_sport())):
-                    datagram_pairs_dict[(source, udp_header.get_uh_sport())] = (ip_header, None)
+                if not datagram_pairs_dict.has_key((destination_ip, udp_header.get_uh_sport())):
+                    datagram_pairs_dict[(source_ip, udp_header.get_uh_sport())] = (ip_header, None)
                 else:
-                    request_ip_header = datagram_pairs_dict[(destination, udp_header.get_uh_sport())][0]
-                    datagram_pairs_dict[(destination, udp_header.get_uh_sport())] = (request_ip_header, ip_header)
+                    request_ip_header = datagram_pairs_dict[(destination_ip, udp_header.get_uh_sport())][0]
+                    datagram_pairs_dict[(destination_ip, udp_header.get_uh_sport())] = (request_ip_header, ip_header)
 
         # Add protocol type to set
         protocol_set.add(protocol)
@@ -101,8 +101,8 @@ def main():
         sys.exit(1)
 
     pc.dispatch(-1, receive_packets)
-    print(ult_source)
-    print(ult_destination)
+    print(ult_source_ip)
+    print(ult_destination_ip)
     print(fragment_dict)
     print(datagram_pairs_dict)
     print(protocol_set)

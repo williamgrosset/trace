@@ -82,9 +82,7 @@ def receive_packets(header, data):
             if not fragment_dict.has_key(identification):
                 fragment_dict[identification] = (1, fragment_offset)
             else:
-                count = fragment_dict[identification][0]
-                count += 1
-                fragment_dict[identification] = (count, fragment_offset)
+                fragment_dict[identification] = (fragment_dict[identification][0] + 1, fragment_offset)
 
 def main():
     filename = sys.argv[1]

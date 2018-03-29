@@ -103,6 +103,7 @@ def handle_packets(header, data):
                 icmp_header = ip_header.child()
                 icmp_type = icmp_header.get_icmp_type()
 
+                # ICMP Type-3 or Type-11
                 if icmp_type == 3 or icmp_type == 11:
                     udp_header = ImpactDecoder.IPDecoder().decode(icmp_header.get_data_as_string()).child()
                     if not datagram_pairs_dict.has_key((destination_ip, udp_header.get_uh_sport())):
@@ -127,9 +128,6 @@ def main():
     print(ult_destination_ip)
     print(datagram_pairs_dict)
     print(fragment_dict)
-
-    print('TODO: WINDOWS')
-    print('Verifying source and destination pair...')
 
 if __name__ == '__main__':
     main()

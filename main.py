@@ -1,7 +1,13 @@
+from __future__ import division
 from collections import OrderedDict
 from impacket import ImpactDecoder, ImpactPacket
 import pcapy
 import sys
+
+class Datagram:
+    def __init__(self, timestamp, ip_header):
+        self.ts = timestamp
+        self.ip_header = ip_header
 
 # TODO: Remove support for non-required types
 PROTOCOL_TYPES = {
@@ -31,9 +37,13 @@ def identify_intermediate_routers():
     hop_count = 1
 
     for key, value in datagram_pairs_dict.iteritems():
-        ip_header = value[0]
-        if ip_header != None:
-            print(ip_header.get_ip_ttl())
+        ip_header_req = value[0].ip_header
+        if value[1] != None:
+            ip_header_resp = value[1].ip_header
+            print(ip_header_req.get_ip_ttl())
+            print(ip_header_resp.get_ip_src())
+
+    return intermediate_list
 
 def add_fragmented_datagram(ip_header):
     fragment_offset = ip_header.get_ip_off() * 8;
@@ -52,6 +62,7 @@ def handle_packets(header, data):
     if ethernet_packet.get_ether_type() != ImpactPacket.IP.ethertype:
         return
 
+    ts = header.getts()[0] + (header.getts()[1] / 1000000)
     ip_header = ethernet_packet.child()
     protocol = PROTOCOL_TYPES[ip_header.get_ip_p()]
 
@@ -94,17 +105,17 @@ def handle_packets(header, data):
                 seq_num = icmp_header.get_icmp_seq()
 
             if not datagram_pairs_dict.has_key((destination_ip, seq_num)):
-                datagram_pairs_dict[(source_ip, seq_num)] = (ip_header, None)
+                datagram_pairs_dict[(source_ip, seq_num)] = (Datagram(ts, ip_header), None)
             else:
-                request_ip_header = datagram_pairs_dict[(destination_ip, seq_num)][0]
-                datagram_pairs_dict[(destination_ip, seq_num)] = (request_ip_header, ip_header)
+                request_datagram = datagram_pairs_dict[(destination_ip, seq_num)][0]
+                datagram_pairs_dict[(destination_ip, seq_num)] = (request_datagram, Datagram(ts, ip_header))
         else:
             # UDP
             if protocol == 'UDP':
                 udp_header = ip_header.child()
 
                 if not datagram_pairs_dict.has_key((source_ip, udp_header.get_uh_sport())):
-                    datagram_pairs_dict[(source_ip, udp_header.get_uh_sport())] = (ip_header, None)
+                    datagram_pairs_dict[(source_ip, udp_header.get_uh_sport())] = (Datagram(ts, ip_header), None)
             # ICMP
             else:
                 icmp_header = ip_header.child()
@@ -114,10 +125,10 @@ def handle_packets(header, data):
                 if icmp_type == 3 or icmp_type == 11:
                     udp_header = ImpactDecoder.IPDecoder().decode(icmp_header.get_data_as_string()).child()
                     if not datagram_pairs_dict.has_key((destination_ip, udp_header.get_uh_sport())):
-                        datagram_pairs_dict[(source_ip, udp_header.get_uh_sport())] = (ip_header, None)
+                        datagram_pairs_dict[(source_ip, udp_header.get_uh_sport())] = (Datagram(ts, ip_header), None)
                     else:
-                        request_ip_header = datagram_pairs_dict[(destination_ip, udp_header.get_uh_sport())][0]
-                        datagram_pairs_dict[(destination_ip, udp_header.get_uh_sport())] = (request_ip_header, ip_header)
+                        request_datagram = datagram_pairs_dict[(destination_ip, udp_header.get_uh_sport())][0]
+                        datagram_pairs_dict[(destination_ip, udp_header.get_uh_sport())] = (request_datagram, Datagram(ts, ip_header))
 
         # Identify datagram fragments and last fragment offset
         add_fragmented_datagram(ip_header)
@@ -131,8 +142,6 @@ def main():
         sys.exit(1)
 
     pc.dispatch(-1, handle_packets)
-    print(datagram_pairs_dict)
-    print(fragment_dict)
     identify_intermediate_routers()
 
 if __name__ == '__main__':

@@ -32,17 +32,26 @@ def print_results():
     print('The offset of the last fragment is:')
     print('The avg RTT between IP HERE and IP HERE is: VALUE ms, the s.d. is: VALUE ms')
 
-def identify_intermediate_routers():
+def clear_datagram_dict():
+    global datagram_pairs_dict
+    dict = datagram_pairs_dict
+    for key, value in dict.iteritems():
+        if value[1] == None: del dict[key]
+    datagram_pairs_dict = dict
+    return dict
+
+def identify_intermediate_routers(intermediate_list):
+    intermediate_ip_set = []
+    for datagram_pair in intermediate_list:
+        source = datagram_pair[1][1].ip_header.get_ip_src()
+        if source not in intermediate_ip_set:
+            intermediate_ip_set.append(source)
+    return intermediate_ip_set
+
+def sort_datagram_pairs():
     intermediate_list = []
-    hop_count = 1
-
-    for key, value in datagram_pairs_dict.iteritems():
-        ip_header_req = value[0].ip_header
-        if value[1] != None:
-            ip_header_resp = value[1].ip_header
-            print(ip_header_req.get_ip_ttl())
-            print(ip_header_resp.get_ip_src())
-
+    # Sort by TTL and timestamp
+    intermediate_list = sorted(datagram_pairs_dict.iteritems(), key=lambda value: (value[1][0].ip_header.get_ip_ttl(), value[1][1].ts))
     return intermediate_list
 
 def add_fragmented_datagram(ip_header):
@@ -142,7 +151,10 @@ def main():
         sys.exit(1)
 
     pc.dispatch(-1, handle_packets)
-    identify_intermediate_routers()
+    datagram_pairs_dict = clear_datagram_dict()
+    intermediate_list = sort_datagram_pairs()
+    intermediate_set = identify_intermediate_routers(intermediate_list)
+    print(intermediate_set)
 
 if __name__ == '__main__':
     main()

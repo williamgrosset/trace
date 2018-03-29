@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from impacket import ImpactDecoder, ImpactPacket
 import pcapy
 import sys
@@ -11,8 +12,8 @@ PROTOCOL_TYPES = {
 }
 
 protocol_set = set([])
+datagram_pairs_dict = OrderedDict()
 fragment_dict = {}
-datagram_pairs_dict = {}
 is_initial_packet = True
 is_windows = False
 
@@ -26,7 +27,13 @@ def print_results():
     print('The avg RTT between IP HERE and IP HERE is: VALUE ms, the s.d. is: VALUE ms')
 
 def identify_intermediate_routers():
-    print('')
+    intermediate_list = []
+    hop_count = 1
+
+    for key, value in datagram_pairs_dict.iteritems():
+        ip_header = value[0]
+        if ip_header != None:
+            print(ip_header.get_ip_ttl())
 
 def add_fragmented_datagram(ip_header):
     fragment_offset = ip_header.get_ip_off() * 8;
@@ -126,6 +133,7 @@ def main():
     pc.dispatch(-1, handle_packets)
     print(datagram_pairs_dict)
     print(fragment_dict)
+    identify_intermediate_routers()
 
 if __name__ == '__main__':
     main()

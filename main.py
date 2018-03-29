@@ -10,11 +10,10 @@ PROTOCOL_TYPES = {
     17: 'UDP'
 }
 
-ult_source_ip = ''          # Temporary (?)
-ult_destination_ip = ''     # Temporary (?)
 protocol_set = set([])
 fragment_dict = {}
 datagram_pairs_dict = {}
+is_initial_packet = True
 is_windows = False
 
 def print_results():
@@ -25,6 +24,9 @@ def print_results():
     print('The number of fragments created from the original datagram is:')
     print('The offset of the last fragment is:')
     print('The avg RTT between IP HERE and IP HERE is: VALUE ms, the s.d. is: VALUE ms')
+
+def identify_intermediate_routers():
+    print('')
 
 def add_fragmented_datagram(ip_header):
     fragment_offset = ip_header.get_ip_off() * 8;
@@ -47,30 +49,25 @@ def handle_packets(header, data):
     protocol = PROTOCOL_TYPES[ip_header.get_ip_p()]
 
     # Only target UDP/ICMP packets (ignore DNS)
-    if protocol == 'ICMP' or (protocol == 'UDP' and not
+    if (protocol == 'ICMP' and not ip_header.child().get_icmp_type() == 9) or (protocol == 'UDP' and not
      (ip_header.child().get_uh_sport() == 53 or ip_header.child().get_uh_dport() == 53)):
         source_ip = ip_header.get_ip_src()
         destination_ip = ip_header.get_ip_dst()
 
         # Identify if Windows capture file
-        if not ult_source_ip and not ult_destination_ip and protocol == 'ICMP' and ip_header.child().get_icmp_type() == 8:
+        if is_initial_packet and protocol == 'ICMP' and ip_header.child().get_icmp_type() == 8:
             global is_windows
             is_windows = True
 
-        # Identify ultimate source
-        if not ult_source_ip:
-            global ult_source_ip
-            ult_source_ip = source_ip
-
-        # Identify ultimate destination
-        if not ult_destination_ip:
-            global ult_destination_ip
-            ult_destination_ip = destination_ip
+        # Identify initial_packet
+        if is_initial_packet:
+            global is_initial_packet
+            is_initial_packet = False
 
         # Add protocol type to set
         protocol_set.add(protocol)
 
-        # TODO: Identify pairs for ICMP/ICMP or UDP/ICMP datagrams
+        # Identify pairs for ICMP/ICMP or UDP/ICMP datagrams
         if is_windows:
             if protocol != 'ICMP':
                 return
@@ -83,6 +80,9 @@ def handle_packets(header, data):
                 seq_num = icmp_header.get_icmp_seq()
             # ICMP Type-11 nested with ICMP Type-8
             else:
+                if icmp_type != 11:
+                    return
+
                 icmp_header = ImpactDecoder.IPDecoder().decode(ip_header.child().get_data_as_string()).child()
                 seq_num = icmp_header.get_icmp_seq()
 
@@ -124,8 +124,6 @@ def main():
         sys.exit(1)
 
     pc.dispatch(-1, handle_packets)
-    print(ult_source_ip)
-    print(ult_destination_ip)
     print(datagram_pairs_dict)
     print(fragment_dict)
 

@@ -96,12 +96,13 @@ def receive_packets(header, data):
                     datagram_pairs_dict[(source_ip, ip_header.child().get_uh_sport())] = (ip_header, None)
             # ICMP
             else:
-                udp_header = ImpactDecoder.IPDecoder().decode(ip_header.child().get_data_as_string()).child()
-                if not datagram_pairs_dict.has_key((destination_ip, udp_header.get_uh_sport())):
-                    datagram_pairs_dict[(source_ip, udp_header.get_uh_sport())] = (ip_header, None)
-                else:
-                    request_ip_header = datagram_pairs_dict[(destination_ip, udp_header.get_uh_sport())][0]
-                    datagram_pairs_dict[(destination_ip, udp_header.get_uh_sport())] = (request_ip_header, ip_header)
+                if ip_header.child().get_icmp_type() == 8 or ip_header.child().get_icmp_type() == 11:
+                    udp_header = ImpactDecoder.IPDecoder().decode(ip_header.child().get_data_as_string()).child()
+                    if not datagram_pairs_dict.has_key((destination_ip, udp_header.get_uh_sport())):
+                        datagram_pairs_dict[(source_ip, udp_header.get_uh_sport())] = (ip_header, None)
+                    else:
+                        request_ip_header = datagram_pairs_dict[(destination_ip, udp_header.get_uh_sport())][0]
+                        datagram_pairs_dict[(destination_ip, udp_header.get_uh_sport())] = (request_ip_header, ip_header)
 
         # TODO: Identify datagram fragments and last fragment offset
         add_fragmented_datagram(ip_header)
@@ -119,6 +120,8 @@ def main():
     print(ult_destination_ip)
     print(datagram_pairs_dict)
     print(fragment_dict)
+
+    print('Verifying source and destination pair...')
 
 if __name__ == '__main__':
     main()

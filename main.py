@@ -77,7 +77,7 @@ def receive_packets(header, data):
 
             icmp_header = ip_header.child()
             # ICMP Type-8
-            if icmp_header.get_icmp_type() == 8:
+            if icmp_header.get_icmp_type() == 8 or icmp_header.get_icmp_type() == 0:
                 seq_num = icmp_header.get_icmp_seq()
             # ICMP Type-11 nested with ICMP Type-8
             else:

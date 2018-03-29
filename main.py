@@ -36,7 +36,7 @@ def add_fragmented_datagram(ip_header):
         else:
             fragment_dict[identification] = (fragment_dict[identification][0] + 1, fragment_offset)
 
-def receive_packets(header, data):
+def handle_packets(header, data):
     decoder = ImpactDecoder.EthDecoder()
     ethernet_packet = decoder.decode(data)
 
@@ -70,14 +70,16 @@ def receive_packets(header, data):
         # Add protocol type to set
         protocol_set.add(protocol)
 
-        # TODO (Handle Exception): Grab all appropriate IP pairs for ICMP/ICMP or UDP/ICMP datagrams
+        # TODO: Identify pairs for ICMP/ICMP or UDP/ICMP datagrams
         if is_windows:
             if protocol != 'ICMP':
                 return
 
             icmp_header = ip_header.child()
-            # ICMP Type-8
-            if icmp_header.get_icmp_type() == 8 or icmp_header.get_icmp_type() == 0:
+            icmp_type = icmp_header.get_icmp_type()
+
+            # ICMP Type-0 or Type-8
+            if icmp_type == 0 or icmp_type == 8:
                 seq_num = icmp_header.get_icmp_seq()
             # ICMP Type-11 nested with ICMP Type-8
             else:
@@ -92,19 +94,24 @@ def receive_packets(header, data):
         else:
             # UDP
             if protocol == 'UDP':
-                if not datagram_pairs_dict.has_key((source_ip, ip_header.child().get_uh_sport())):
-                    datagram_pairs_dict[(source_ip, ip_header.child().get_uh_sport())] = (ip_header, None)
+                udp_header = ip_header.child()
+
+                if not datagram_pairs_dict.has_key((source_ip, udp_header.get_uh_sport())):
+                    datagram_pairs_dict[(source_ip, udp_header.get_uh_sport())] = (ip_header, None)
             # ICMP
             else:
-                if ip_header.child().get_icmp_type() == 8 or ip_header.child().get_icmp_type() == 11:
-                    udp_header = ImpactDecoder.IPDecoder().decode(ip_header.child().get_data_as_string()).child()
+                icmp_header = ip_header.child()
+                icmp_type = icmp_header.get_icmp_type()
+
+                if icmp_type == 3 or icmp_type == 11:
+                    udp_header = ImpactDecoder.IPDecoder().decode(icmp_header.get_data_as_string()).child()
                     if not datagram_pairs_dict.has_key((destination_ip, udp_header.get_uh_sport())):
                         datagram_pairs_dict[(source_ip, udp_header.get_uh_sport())] = (ip_header, None)
                     else:
                         request_ip_header = datagram_pairs_dict[(destination_ip, udp_header.get_uh_sport())][0]
                         datagram_pairs_dict[(destination_ip, udp_header.get_uh_sport())] = (request_ip_header, ip_header)
 
-        # TODO: Identify datagram fragments and last fragment offset
+        # Identify datagram fragments and last fragment offset
         add_fragmented_datagram(ip_header)
 
 def main():
@@ -115,12 +122,13 @@ def main():
         print('Cannot open capture file: %s' % filename)
         sys.exit(1)
 
-    pc.dispatch(-1, receive_packets)
+    pc.dispatch(-1, handle_packets)
     print(ult_source_ip)
     print(ult_destination_ip)
     print(datagram_pairs_dict)
     print(fragment_dict)
 
+    print('TODO: WINDOWS')
     print('Verifying source and destination pair...')
 
 if __name__ == '__main__':

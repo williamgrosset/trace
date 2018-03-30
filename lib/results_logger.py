@@ -17,7 +17,7 @@ def print_protocol_types(protocol_set):
 def print_fragmentation(fragment_dict):
     i = 1
     for key, value in fragment_dict.iteritems():
-        print('The number of fragments created from the original datagram D%i is:' % (i, value[0]))
+        print('The number of fragments created from the original datagram D%i is: %i' % (i, value[0]))
         print('The offset of the last fragment is: %i\n' % value[1])
         i += 1
 

@@ -1,8 +1,8 @@
 from __future__ import division
 from collections import OrderedDict
 from impacket import ImpactDecoder, ImpactPacket
-from results_logger import print_results
-from CONSTANTS import PROTOCOL_TYPES
+from lib.results_logger import print_results
+from lib.CONSTANTS import PROTOCOL_TYPES
 import numpy
 import pcapy
 import sys

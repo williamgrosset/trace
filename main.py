@@ -17,12 +17,8 @@ fragment_dict = {}
 is_initial_packet = True
 is_windows = False
 
-def clear_datagram_dict():
-    global datagram_pairs_dict
-    temp_dict = datagram_pairs_dict
-    for key, value in temp_dict.iteritems():
-        if value[1] == None: del temp_dict[key]
-    return temp_dict
+def calculate_rtt_sd(intermediate_list):
+    print('oi')
 
 def identify_intermediate_routers(intermediate_list):
     intermediate_ip_list = []
@@ -30,6 +26,13 @@ def identify_intermediate_routers(intermediate_list):
         source = datagram_pair[1][1].ip_header.get_ip_src()
         if source not in intermediate_ip_list: intermediate_ip_list.append(source)
     return intermediate_ip_list
+
+def clear_datagram_dict():
+    global datagram_pairs_dict
+    temp_dict = datagram_pairs_dict
+    for key, value in temp_dict.iteritems():
+        if value[1] == None: del temp_dict[key]
+    return temp_dict
 
 def sort_datagram_pairs():
     # Sort by TTL and timestamp

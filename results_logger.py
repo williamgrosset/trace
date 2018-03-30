@@ -21,13 +21,14 @@ def print_protocol_types(protocol_set):
     print('\n')
 
 def print_fragmentation(fragment_dict):
+    i = 1
     if fragment_dict:
-        print('The number of fragments created from the original datagram is:')
+        print('The number of fragments created from the original datagram D%i is:' % i)
         print('The offset of the last fragment is:\n')
+        i += 1
 
 def print_statistics():
     print('The avg RTT between IP HERE and IP HERE is: VALUE ms, the s.d. is: VALUE ms')
-
 
 def print_results(intermediate_list, intermediate_set, protocol_set, fragment_dict):
     print_addresses(intermediate_list, intermediate_set)

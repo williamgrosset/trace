@@ -34,27 +34,23 @@ def print_results():
 
 def clear_datagram_dict():
     global datagram_pairs_dict
-    dict = datagram_pairs_dict
-    for key, value in dict.iteritems():
-        if value[1] == None: del dict[key]
-    datagram_pairs_dict = dict
-    return dict
+    temp_dict = datagram_pairs_dict
+    for key, value in temp_dict.iteritems():
+        if value[1] == None: del temp_dict[key]
+    return temp_dict
 
 def identify_intermediate_routers(intermediate_list):
-    intermediate_ip_set = []
+    intermediate_ip_list = []
     for datagram_pair in intermediate_list:
         source = datagram_pair[1][1].ip_header.get_ip_src()
-        if source not in intermediate_ip_set:
-            intermediate_ip_set.append(source)
-    return intermediate_ip_set
+        if source not in intermediate_ip_list: intermediate_ip_list.append(source)
+    return intermediate_ip_list
 
 def sort_datagram_pairs():
-    intermediate_list = []
     # Sort by TTL and timestamp
-    intermediate_list = sorted(datagram_pairs_dict.iteritems(), key=lambda value: (value[1][0].ip_header.get_ip_ttl(), value[1][1].ts))
-    return intermediate_list
+    return sorted(datagram_pairs_dict.iteritems(), key=lambda value: (value[1][0].ip_header.get_ip_ttl(), value[1][1].ts))
 
-def identify_datagram_pairs(protocol, ts, ip_header):
+def identify_datagram_pairs(ts, ip_header, protocol):
     source_ip = ip_header.get_ip_src()
     destination_ip = ip_header.get_ip_dst()
 
@@ -137,7 +133,7 @@ def handle_packets(header, data):
             is_initial_packet = False
 
         # Identify pairs for ICMP/ICMP or UDP/ICMP datagrams
-        identify_datagram_pairs(protocol, ts, ip_header)
+        identify_datagram_pairs(ts, ip_header, protocol)
 
         # Identify datagram fragments and last fragment offset
         add_fragmented_datagram(ip_header)
@@ -155,8 +151,7 @@ def main():
 
     pc.dispatch(-1, handle_packets)
     datagram_pairs_dict = clear_datagram_dict()
-    intermediate_list = sort_datagram_pairs()
-    intermediate_set = identify_intermediate_routers(intermediate_list)
+    intermediate_set = identify_intermediate_routers(sort_datagram_pairs())
     print(intermediate_set)
 
 if __name__ == '__main__':

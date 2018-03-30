@@ -1,13 +1,13 @@
 # trace
 :telephone: IP datagram analysis.
 
-..add gif of terminal output here..
+<img alt="trace" src="https://user-images.githubusercontent.com/16131737/38125024-2ff2af2a-339b-11e8-9d35-85c7b9385eaa.gif" />
 
 ## TODO
-+ Compute avg RTT and standard deviation between source -> intermediate(s) and source -> destination
-  + Need to store all RTTs for pairs
-+ Clean-up repo and add example gif
-  + Make note of file support (`.pcap` vs `.pcapng`)
++ Harder constraints on targeted packets?j
++ Error-handling
++ Clean-up repo/nits
++ Make note of file support (`.pcap` vs `.pcapng`)
 + Finish R2 and add pdf
 
 ## Overview

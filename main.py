@@ -54,6 +54,54 @@ def sort_datagram_pairs():
     intermediate_list = sorted(datagram_pairs_dict.iteritems(), key=lambda value: (value[1][0].ip_header.get_ip_ttl(), value[1][1].ts))
     return intermediate_list
 
+def identify_datagram_pairs(protocol, ts, ip_header):
+    source_ip = ip_header.get_ip_src()
+    destination_ip = ip_header.get_ip_dst()
+
+    if is_windows:
+        if protocol != 'ICMP':
+            return
+
+        icmp_header = ip_header.child()
+        icmp_type = icmp_header.get_icmp_type()
+
+        # ICMP Type-0 or Type-8
+        if icmp_type == 0 or icmp_type == 8:
+            seq_num = icmp_header.get_icmp_seq()
+        # ICMP Type-11 nested with ICMP Type-8
+        else:
+            if icmp_type != 11:
+                return
+
+            icmp_header = ImpactDecoder.IPDecoder().decode(ip_header.child().get_data_as_string()).child()
+            seq_num = icmp_header.get_icmp_seq()
+
+        if not datagram_pairs_dict.has_key((destination_ip, seq_num)):
+            datagram_pairs_dict[(source_ip, seq_num)] = (Datagram(ts, ip_header), None)
+        else:
+            request_datagram = datagram_pairs_dict[(destination_ip, seq_num)][0]
+            datagram_pairs_dict[(destination_ip, seq_num)] = (request_datagram, Datagram(ts, ip_header))
+    else:
+        # UDP
+        if protocol == 'UDP':
+            udp_header = ip_header.child()
+
+            if not datagram_pairs_dict.has_key((source_ip, udp_header.get_uh_sport())):
+                datagram_pairs_dict[(source_ip, udp_header.get_uh_sport())] = (Datagram(ts, ip_header), None)
+        # ICMP
+        else:
+            icmp_header = ip_header.child()
+            icmp_type = icmp_header.get_icmp_type()
+
+            # ICMP Type-3 or Type-11
+            if icmp_type == 3 or icmp_type == 11:
+                udp_header = ImpactDecoder.IPDecoder().decode(icmp_header.get_data_as_string()).child()
+                if not datagram_pairs_dict.has_key((destination_ip, udp_header.get_uh_sport())):
+                    datagram_pairs_dict[(source_ip, udp_header.get_uh_sport())] = (Datagram(ts, ip_header), None)
+                else:
+                    request_datagram = datagram_pairs_dict[(destination_ip, udp_header.get_uh_sport())][0]
+                    datagram_pairs_dict[(destination_ip, udp_header.get_uh_sport())] = (request_datagram, Datagram(ts, ip_header))
+
 def add_fragmented_datagram(ip_header):
     fragment_offset = ip_header.get_ip_off() * 8;
     if not ip_header.get_ip_df() and (ip_header.get_ip_mf() == 1 or fragment_offset > 0):
@@ -78,9 +126,6 @@ def handle_packets(header, data):
     # Only target UDP/ICMP packets (ignore DNS)
     if (protocol == 'ICMP' and not ip_header.child().get_icmp_type() == 9) or (protocol == 'UDP' and not
      (ip_header.child().get_uh_sport() == 53 or ip_header.child().get_uh_dport() == 53)):
-        source_ip = ip_header.get_ip_src()
-        destination_ip = ip_header.get_ip_dst()
-
         # Identify if Windows capture file
         if is_initial_packet and protocol == 'ICMP' and ip_header.child().get_icmp_type() == 8:
             global is_windows
@@ -91,56 +136,14 @@ def handle_packets(header, data):
             global is_initial_packet
             is_initial_packet = False
 
-        # Add protocol type to set
-        protocol_set.add(protocol)
-
         # Identify pairs for ICMP/ICMP or UDP/ICMP datagrams
-        if is_windows:
-            if protocol != 'ICMP':
-                return
-
-            icmp_header = ip_header.child()
-            icmp_type = icmp_header.get_icmp_type()
-
-            # ICMP Type-0 or Type-8
-            if icmp_type == 0 or icmp_type == 8:
-                seq_num = icmp_header.get_icmp_seq()
-            # ICMP Type-11 nested with ICMP Type-8
-            else:
-                if icmp_type != 11:
-                    return
-
-                icmp_header = ImpactDecoder.IPDecoder().decode(ip_header.child().get_data_as_string()).child()
-                seq_num = icmp_header.get_icmp_seq()
-
-            if not datagram_pairs_dict.has_key((destination_ip, seq_num)):
-                datagram_pairs_dict[(source_ip, seq_num)] = (Datagram(ts, ip_header), None)
-            else:
-                request_datagram = datagram_pairs_dict[(destination_ip, seq_num)][0]
-                datagram_pairs_dict[(destination_ip, seq_num)] = (request_datagram, Datagram(ts, ip_header))
-        else:
-            # UDP
-            if protocol == 'UDP':
-                udp_header = ip_header.child()
-
-                if not datagram_pairs_dict.has_key((source_ip, udp_header.get_uh_sport())):
-                    datagram_pairs_dict[(source_ip, udp_header.get_uh_sport())] = (Datagram(ts, ip_header), None)
-            # ICMP
-            else:
-                icmp_header = ip_header.child()
-                icmp_type = icmp_header.get_icmp_type()
-
-                # ICMP Type-3 or Type-11
-                if icmp_type == 3 or icmp_type == 11:
-                    udp_header = ImpactDecoder.IPDecoder().decode(icmp_header.get_data_as_string()).child()
-                    if not datagram_pairs_dict.has_key((destination_ip, udp_header.get_uh_sport())):
-                        datagram_pairs_dict[(source_ip, udp_header.get_uh_sport())] = (Datagram(ts, ip_header), None)
-                    else:
-                        request_datagram = datagram_pairs_dict[(destination_ip, udp_header.get_uh_sport())][0]
-                        datagram_pairs_dict[(destination_ip, udp_header.get_uh_sport())] = (request_datagram, Datagram(ts, ip_header))
+        identify_datagram_pairs(protocol, ts, ip_header)
 
         # Identify datagram fragments and last fragment offset
         add_fragmented_datagram(ip_header)
+
+        # Add protocol type to set
+        protocol_set.add(protocol)
 
 def main():
     filename = sys.argv[1]

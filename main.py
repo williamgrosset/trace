@@ -1,6 +1,7 @@
 from __future__ import division
-from collections import OrderedDict
+from collections import OrderedDict # necessary?
 from impacket import ImpactDecoder, ImpactPacket
+from results_logger import print_results
 import pcapy
 import sys
 
@@ -18,19 +19,10 @@ PROTOCOL_TYPES = {
 }
 
 protocol_set = set([])
-datagram_pairs_dict = OrderedDict()
+datagram_pairs_dict = OrderedDict() # necessary?
 fragment_dict = {}
 is_initial_packet = True
 is_windows = False
-
-def print_results():
-    print('The IP address of the source node:')
-    print('The IP address of ultimate destination node:')
-    print('The IP addresses of the intermediate destination nodes:')
-    print('The values in the protocol field of IP headers:')
-    print('The number of fragments created from the original datagram is:')
-    print('The offset of the last fragment is:')
-    print('The avg RTT between IP HERE and IP HERE is: VALUE ms, the s.d. is: VALUE ms')
 
 def clear_datagram_dict():
     global datagram_pairs_dict
@@ -153,6 +145,7 @@ def main():
     datagram_pairs_dict = clear_datagram_dict()
     intermediate_set = identify_intermediate_routers(sort_datagram_pairs())
     print(intermediate_set)
+    print_results()
 
 if __name__ == '__main__':
     main()

@@ -27,11 +27,14 @@ def print_fragmentation(fragment_dict):
         print('The offset of the last fragment is:\n')
         i += 1
 
-def print_statistics():
-    print('The avg RTT between IP HERE and IP HERE is: VALUE ms, the s.d. is: VALUE ms')
+def print_statistics(source, rtt_dict):
+    for key, value in rtt_dict.iteritems():
+        print('The avg RTT between %s and %s is: %i ms, the s.d. is: %i ms' % (source, key, value[0], value[1]))
 
-def print_results(intermediate_list, intermediate_set, protocol_set, fragment_dict):
+def print_results(intermediate_list, intermediate_set, protocol_set, fragment_dict, rtt_dict):
+    list_length = len(intermediate_list)
+    source = intermediate_list[list_length - 1][1][0].ip_header.get_ip_src()
     print_addresses(intermediate_list, intermediate_set)
     print_protocol_types(protocol_set)
     print_fragmentation(fragment_dict)
-    print_statistics()
+    print_statistics(source, rtt_dict)

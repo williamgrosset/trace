@@ -34,8 +34,9 @@ def calculate_rtt_and_sd(intermediate_list):
             rtt_dict[source_ip] = ts_list
 
     for key, value in rtt_dict.iteritems():
-        print(numpy.mean(value) * 1000)
-        print(numpy.std(value) * 1000)
+        rtt_dict[key] = (numpy.mean(value) * 1000, numpy.std(value) * 1000)
+
+    return rtt_dict
 
 def identify_intermediate_routers(intermediate_list):
     intermediate_ip_list = []
@@ -159,8 +160,8 @@ def main():
     datagram_pairs_dict = clear_datagram_dict()
     intermediate_list = sort_datagram_pairs()
     intermediate_set = identify_intermediate_routers(intermediate_list)
-    calculate_rtt_and_sd(intermediate_list)
-    #print_results(intermediate_list, intermediate_set, protocol_set, fragment_dict)
+    rtt_dict = calculate_rtt_and_sd(intermediate_list)
+    print_results(intermediate_list, intermediate_set, protocol_set, fragment_dict, rtt_dict)
 
 if __name__ == '__main__':
     main()

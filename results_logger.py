@@ -1,3 +1,5 @@
+from CONSTANTS import PROTOCOL_TYPES
+
 def print_results(intermediate_list, intermediate_set, protocol_set, fragment_dict):
     list_length = len(intermediate_list)
     source = intermediate_list[list_length - 1][1][0].ip_header.get_ip_src()
@@ -12,10 +14,8 @@ def print_results(intermediate_list, intermediate_set, protocol_set, fragment_di
     print('\n')
 
     print('The values in the protocol field of IP headers:')
-    i = 1
     for protocol in protocol_set:
-        print('\t%i: %s' % (i, protocol))
-        i += 1
+        print('\t%i: %s' % (protocol, PROTOCOL_TYPES[protocol]))
 
     print('\n')
 

@@ -2,6 +2,7 @@ from __future__ import division
 from collections import OrderedDict # necessary?
 from impacket import ImpactDecoder, ImpactPacket
 from results_logger import print_results
+from CONSTANTS import PROTOCOL_TYPES
 import pcapy
 import sys
 
@@ -9,14 +10,6 @@ class Datagram:
     def __init__(self, timestamp, ip_header):
         self.ts = timestamp
         self.ip_header = ip_header
-
-# TODO: Remove support for non-required types
-PROTOCOL_TYPES = {
-    1: 'ICMP',
-    2: 'IGMP',
-    6: 'TCP',
-    17: 'UDP'
-}
 
 protocol_set = set([])
 datagram_pairs_dict = OrderedDict() # necessary?
@@ -109,13 +102,14 @@ def handle_packets(header, data):
 
     ts = header.getts()[0] + (header.getts()[1] / 1000000)
     ip_header = ethernet_packet.child()
-    protocol = PROTOCOL_TYPES[ip_header.get_ip_p()]
+    protocol = ip_header.get_ip_p()
+    protocol_type = PROTOCOL_TYPES[protocol]
 
     # Only target UDP/ICMP packets (ignore DNS)
-    if (protocol == 'ICMP' and not ip_header.child().get_icmp_type() == 9) or (protocol == 'UDP' and not
+    if (protocol_type == 'ICMP' and not ip_header.child().get_icmp_type() == 9) or (protocol_type == 'UDP' and not
      (ip_header.child().get_uh_sport() == 53 or ip_header.child().get_uh_dport() == 53)):
         # Identify if Windows capture file
-        if is_initial_packet and protocol == 'ICMP' and ip_header.child().get_icmp_type() == 8:
+        if is_initial_packet and protocol_type == 'ICMP' and ip_header.child().get_icmp_type() == 8:
             global is_windows
             is_windows = True
 
@@ -125,7 +119,7 @@ def handle_packets(header, data):
             is_initial_packet = False
 
         # Identify pairs for ICMP/ICMP or UDP/ICMP datagrams
-        identify_datagram_pairs(ts, ip_header, protocol)
+        identify_datagram_pairs(ts, ip_header, protocol_type)
 
         # Identify datagram fragments and last fragment offset
         add_fragmented_datagram(ip_header)

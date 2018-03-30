@@ -143,9 +143,9 @@ def main():
 
     pc.dispatch(-1, handle_packets)
     datagram_pairs_dict = clear_datagram_dict()
-    intermediate_set = identify_intermediate_routers(sort_datagram_pairs())
-    print(intermediate_set)
-    print_results()
+    intermediate_list = sort_datagram_pairs()
+    intermediate_set = identify_intermediate_routers(intermediate_list)
+    print_results(intermediate_list, intermediate_set)
 
 if __name__ == '__main__':
     main()

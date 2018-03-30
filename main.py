@@ -25,7 +25,6 @@ def calculate_rtt_and_sd(intermediate_list):
         source_ip = intermediate[1][1].ip_header.get_ip_src()
         ts = intermediate[1][1].ts - intermediate[1][0].ts
 
-        # Store in dictionary: source_ip -> [] (timestamp list)
         if not rtt_dict.has_key(source_ip):
             rtt_dict[source_ip] = [ts] 
         else:
@@ -33,6 +32,7 @@ def calculate_rtt_and_sd(intermediate_list):
             ts_list.append(ts)
             rtt_dict[source_ip] = ts_list
 
+    # Store in dictionary: source ip -> (average round-trip time, standard deviation)
     for key, value in rtt_dict.iteritems():
         rtt_dict[key] = (numpy.mean(value) * 1000, numpy.std(value) * 1000)
 
@@ -161,7 +161,9 @@ def main():
     intermediate_list = sort_datagram_pairs()
     intermediate_set = identify_intermediate_routers(intermediate_list)
     rtt_dict = calculate_rtt_and_sd(intermediate_list)
-    print_results(intermediate_list, intermediate_set, protocol_set, fragment_dict, rtt_dict)
+    source_ip = intermediate_list[len(intermediate_list) - 1][1][0].ip_header.get_ip_src()
+    destination_ip = intermediate_list[len(intermediate_list) - 1][1][1].ip_header.get_ip_src()
+    print_results(source_ip, destination_ip, intermediate_set, protocol_set, fragment_dict, rtt_dict)
 
 if __name__ == '__main__':
     main()

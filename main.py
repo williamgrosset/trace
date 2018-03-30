@@ -145,7 +145,7 @@ def main():
     datagram_pairs_dict = clear_datagram_dict()
     intermediate_list = sort_datagram_pairs()
     intermediate_set = identify_intermediate_routers(intermediate_list)
-    print_results(intermediate_list, intermediate_set)
+    print_results(intermediate_list, intermediate_set, protocol_set, fragment_dict)
 
 if __name__ == '__main__':
     main()

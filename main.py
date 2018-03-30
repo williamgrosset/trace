@@ -3,6 +3,7 @@ from collections import OrderedDict
 from impacket import ImpactDecoder, ImpactPacket
 from results_logger import print_results
 from CONSTANTS import PROTOCOL_TYPES
+import numpy
 import pcapy
 import sys
 
@@ -17,8 +18,24 @@ fragment_dict = {}
 is_initial_packet = True
 is_windows = False
 
-def calculate_rtt_sd(intermediate_list):
-    print('oi')
+def calculate_rtt_and_sd(intermediate_list):
+    rtt_dict = OrderedDict()
+
+    for intermediate in intermediate_list:
+        source_ip = intermediate[1][1].ip_header.get_ip_src()
+        ts = intermediate[1][1].ts - intermediate[1][0].ts
+
+        # Store in dictionary: source_ip -> [] (timestamp list)
+        if not rtt_dict.has_key(source_ip):
+            rtt_dict[source_ip] = [ts] 
+        else:
+            ts_list = rtt_dict[source_ip]
+            ts_list.append(ts)
+            rtt_dict[source_ip] = ts_list
+
+    for key, value in rtt_dict.iteritems():
+        print(numpy.mean(value) * 1000)
+        print(numpy.std(value) * 1000)
 
 def identify_intermediate_routers(intermediate_list):
     intermediate_ip_list = []
@@ -142,7 +159,8 @@ def main():
     datagram_pairs_dict = clear_datagram_dict()
     intermediate_list = sort_datagram_pairs()
     intermediate_set = identify_intermediate_routers(intermediate_list)
-    print_results(intermediate_list, intermediate_set, protocol_set, fragment_dict)
+    calculate_rtt_and_sd(intermediate_list)
+    #print_results(intermediate_list, intermediate_set, protocol_set, fragment_dict)
 
 if __name__ == '__main__':
     main()

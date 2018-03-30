@@ -1,5 +1,5 @@
 from __future__ import division
-from collections import OrderedDict # necessary?
+from collections import OrderedDict
 from impacket import ImpactDecoder, ImpactPacket
 from results_logger import print_results
 from CONSTANTS import PROTOCOL_TYPES
@@ -12,7 +12,7 @@ class Datagram:
         self.ip_header = ip_header
 
 protocol_set = set([])
-datagram_pairs_dict = OrderedDict() # necessary?
+datagram_pairs_dict = OrderedDict()
 fragment_dict = {}
 is_initial_packet = True
 is_windows = False

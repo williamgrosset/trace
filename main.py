@@ -12,9 +12,9 @@ class Datagram:
         self.ts = timestamp
         self.ip_header = ip_header
 
-protocol_set = set([])
 datagram_pairs_dict = OrderedDict()
 fragment_dict = {}
+protocol_set = set([])
 is_initial_packet = True
 is_windows = False
 
@@ -34,7 +34,9 @@ def calculate_rtt_and_sd(intermediate_list):
 
     # Store in dictionary: source ip -> (average round-trip time, standard deviation)
     for key, value in rtt_dict.iteritems():
-        rtt_dict[key] = (numpy.mean(value) * 1000, numpy.std(value) * 1000)
+        avg_rtt_ms = numpy.mean(value) * 1000 if len(value) > 1 else 0
+        std_ms = numpy.std(value) * 1000 if len(value) > 1 else 0
+        rtt_dict[key] = (avg_rtt_ms, std_ms)
 
     return rtt_dict
 
@@ -45,23 +47,23 @@ def identify_intermediate_routers(intermediate_list):
         if source not in intermediate_ip_list: intermediate_ip_list.append(source)
     return intermediate_ip_list
 
-def clear_datagram_dict():
-    global datagram_pairs_dict
-    temp_dict = datagram_pairs_dict
-    for key, value in temp_dict.iteritems():
-        if value[1] == None: del temp_dict[key]
-    return temp_dict
-
 def sort_datagram_pairs():
     # Sort by TTL and timestamp
     return sorted(datagram_pairs_dict.iteritems(), key=lambda value: (value[1][0].ip_header.get_ip_ttl(), value[1][1].ts))
 
-def identify_datagram_pairs(ts, ip_header, protocol):
+def clear_datagram_dict():
+    global datagram_pairs_dict
+    unique_dict = datagram_pairs_dict
+    for key, value in unique_dict.iteritems():
+        if value[1] == None: del unique_dict[key]
+    return unique_dict
+
+def identify_datagram_pairs(ts, ip_header, protocol_type):
     source_ip = ip_header.get_ip_src()
     destination_ip = ip_header.get_ip_dst()
 
     if is_windows:
-        if protocol != 'ICMP':
+        if protocol_type != 'ICMP':
             return
 
         icmp_header = ip_header.child()
@@ -85,7 +87,7 @@ def identify_datagram_pairs(ts, ip_header, protocol):
             datagram_pairs_dict[(destination_ip, seq_num)] = (request_datagram, Datagram(ts, ip_header))
     else:
         # UDP
-        if protocol == 'UDP':
+        if protocol_type == 'UDP':
             udp_header = ip_header.child()
 
             if not datagram_pairs_dict.has_key((source_ip, udp_header.get_uh_sport())):
@@ -129,6 +131,8 @@ def handle_packets(header, data):
     # Only target UDP/ICMP packets (ignore DNS)
     if (protocol_type == 'ICMP' and not ip_header.child().get_icmp_type() == 9) or (protocol_type == 'UDP' and not
      (ip_header.child().get_uh_sport() == 53 or ip_header.child().get_uh_dport() == 53)):
+        global is_initial_packet
+
         # Identify if Windows capture file
         if is_initial_packet and protocol_type == 'ICMP' and ip_header.child().get_icmp_type() == 8:
             global is_windows
@@ -136,7 +140,6 @@ def handle_packets(header, data):
 
         # Identify initial_packet
         if is_initial_packet:
-            global is_initial_packet
             is_initial_packet = False
 
         # Identify pairs for ICMP/ICMP or UDP/ICMP datagrams
@@ -157,12 +160,14 @@ def main():
         sys.exit(1)
 
     pc.dispatch(-1, handle_packets)
+
     datagram_pairs_dict = clear_datagram_dict()
     intermediate_list = sort_datagram_pairs()
     intermediate_set = identify_intermediate_routers(intermediate_list)
     rtt_dict = calculate_rtt_and_sd(intermediate_list)
     source_ip = intermediate_list[len(intermediate_list) - 1][1][0].ip_header.get_ip_src()
     destination_ip = intermediate_list[len(intermediate_list) - 1][1][1].ip_header.get_ip_src()
+
     print_results(source_ip, destination_ip, intermediate_set, protocol_set, fragment_dict, rtt_dict)
 
 if __name__ == '__main__':

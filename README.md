@@ -1,6 +1,4 @@
 # trace
-:telephone: IP datagram analysis.
-
 <img alt="trace" src="https://user-images.githubusercontent.com/16131737/38125024-2ff2af2a-339b-11e8-9d35-85c7b9385eaa.gif" />
 
 ## Overview
